@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List - Có Báo Thức</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #202124;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: #fff;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 20px;
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background-color: #1a73e8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            color: #202124;
+            font-weight: 600;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #5f6368;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: #f1f3f4;
+        }
+
+        .menu-item.active {
+            background-color: #e8f0fe;
+            color: #1a73e8;
+            border-right: 3px solid #1a73e8;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 28px;
+            color: #202124;
+            margin-bottom: 20px;
+        }
+
+        /* Add Task Form */
+        .add-task {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .task-input-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .add-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #1a73e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a73e8;
+            font-size: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .add-icon:hover {
+            background-color: #e8f0fe;
+        }
+
+        #taskInput {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid transparent;
+            background-color: transparent;
+        }
+
+        #taskInput:focus {
+            border-bottom: 1px solid #1a73e8;
+        }
+
+        .datetime-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding-left: 39px;
+        }
+
+        .datetime-input {
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #5f6368;
+            outline: none;
+        }
+
+        .datetime-input:focus {
+            border-color: #1a73e8;
+        }
+
+        .add-btn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .add-btn:hover {
+            background-color: #1557b0;
+        }
+
+        /* Task List */
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            background-color: #fff;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+
+        .task-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #5f6368;
+            border-radius: 50%;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            margin-top: 2px;
+        }
+
+        .checkbox.checked {
+            background-color: #1a73e8;
+            border-color: #1a73e8;
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-text {
+            font-size: 16px;
+            color: #202124;
+            margin-bottom: 5px;
+        }
+
+        .task-text.completed {
+            text-decoration: line-through;
+            color: #5f6368;
+        }
+
+        .task-time {
+            font-size: 13px;
+            color: #5f6368;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .task-time.urgent {
+            color: #d93025;
+            font-weight: 500;
+        }
+
+        .delete-btn {
+            color: #5f6368;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 20px;
+            padding: 0 5px;
+        }
+
+        .task-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            color: #d93025;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #5f6368;
+            background-color: #fff;
+            border-radius: 8px;
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .empty-text {
+            font-size: 16px;
+        }
+
+        /* Notification Permission */
+        .notification-banner {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification-banner button {
+            background-color: #ffc107;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .notification-banner button:hover {
+            background-color: #e0a800;
+        }
+
+        /* Alarm Alert Banner */
+        .alarm-banner {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            animation: alarmPulse 1s infinite;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        @keyframes alarmPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .alarm-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .alarm-icon {
+            font-size: 40px;
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
+
+        .alarm-text {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .alarm-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #92400e;
+        }
+
+        .alarm-task {
+            font-size: 14px;
+            color: #78350f;
+        }
+
+        .stop-alarm-btn {
+            background-color: #f59e0b;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .stop-alarm-btn:hover {
+            background-color: #d97706;
+            transform: scale(1.05);
+        }
+
+        /* Footer Info */
+        .footer-info {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .footer-info h3 {
+            font-size: 14px;
+            color: #5f6368;
+            margin-bottom: 10px;
+        }
+
+        .footer-info ul {
+            list-style: none;
+            font-size: 13px;
+            color: #5f6368;
+            line-height: 1.8;
+        }
+
+        .footer-info ul li::before {
+            content: '• ';
+            color: #1a73e8;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .info-box p {
+            font-size: 13px;
+            color: #1b5e20;
+            line-height: 1.6;
+        }
+
+        .info-box code {
+            background-color: #c8e6c9;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">✓</div>
+                <div class="logo-text">To-Do List</div>
+            </div>
+            <div class="menu-item active">
+                <span>📋</span>
+                <span>Việc cần làm của tôi</span>
+            </div>
+            <div class="menu-item">
+                <span>⭐</span>
+                <span>Quan trọng</span>
+            </div>
+            <div class="menu-item">
+                <span>🔔</span>
+                <span>Có nhắc nhở</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1 class="title">Việc cần làm của tôi</h1>
+            </div>
+
+            <!-- Notification Permission Banner -->
+            <div class="notification-banner" id="notificationBanner">
+                <span>🔔 Cho phép thông báo để nhận nhắc nhở công việc</span>
+                <button onclick="requestNotificationPermission()">Cho phép</button>
+            </div>
+
+            <!-- Alarm Alert Banner -->
+            <div class="alarm-banner" id="alarmBanner">
+                <div class="alarm-content">
+                    <div class="alarm-icon">⏰</div>
+                    <div class="alarm-text">
+                        <div class="alarm-title">Báo thức đang reo!</div>
+                        <div class="alarm-task" id="alarmTaskText"></div>
+                    </div>
+                </div>
+                <button class="stop-alarm-btn" onclick="stopAlarm()">Tắt báo thức</button>
+            </div>
+
+            <!-- Add Task -->
+            <div class="add-task">
+                <div class="task-input-row">
+                    <div class="add-icon" onclick="document.getElementById('taskInput').focus()">+</div>
+                    <input 
+                        type="text" 
+                        id="taskInput" 
+                        placeholder="Thêm việc cần làm"
+                        onkeypress="if(event.key==='Enter') addTask()"
+                    >
+                </div>
+                <div class="datetime-row">
+                    <span style="font-size: 14px; color: #5f6368;">🕐</span>
+                    <input 
+                        type="date" 
+                        id="taskDate" 
+                        class="datetime-input"
+                    >
+                    <input 
+                        type="time" 
+                        id="taskTime" 
+                        class="datetime-input"
+                    >
+                    <button class="add-btn" onclick="addTask()">Thêm</button>
+                </div>
+            </div>
+
+            <!-- Task List -->
+            <ul class="task-list" id="taskList">
+                <!-- Tasks will be added here -->
+            </ul>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">📝</div>
+                <div class="empty-text">Chưa có việc cần làm. Hãy thêm công việc mới!</div>
+            </div>
+
+            <!-- Footer Info -->
+            <div class="footer-info">
+                <h3>🎓 Kiến trúc ứng dụng Client-side</h3>
+                <ul>
+                    <li><strong>HTML:</strong> Cấu trúc giao diện</li>
+                    <li><strong>CSS:</strong> Thiết kế và trang trí</li>
+                    <li><strong>JavaScript:</strong> Xử lý logic (thêm, xóa, hoàn thành, nhắc nhở)</li>
+                    <li><strong>LocalStorage:</strong> Lưu trữ dữ liệu trên trình duyệt</li>
+                    <li><strong>Notification API:</strong> Thông báo nhắc nhở công việc</li>
+                    <li><strong>Web Audio API:</strong> Âm thanh báo thức giống điện thoại 🔊</li>
+                </ul>
+
+                <div class="info-box">
+                    <h4>🎵 Tùy chỉnh âm thanh báo thức</h4>
+                    <p>
+                        <strong>Hiện tại:</strong> Dùng âm thanh tạo tự động (Web Audio API)<br>
+                        <strong>Nếu muốn dùng file nhạc riêng:</strong> Tìm dòng <code>const CUSTOM_ALARM_SOUND = '';</code> 
+                        trong phần &lt;script&gt; và thay bằng URL file MP3 của bạn.<br>
+                        <strong>Ví dụ:</strong> <code>const CUSTOM_ALARM_SOUND = 'alarm.mp3';</code>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden audio element -->
+    <audio id="customAlarmAudio" preload="auto"></audio>
+
+    <script>
+        // ========== CẤU HÌNH ÂM THANH ==========
+        // Nếu muốn dùng file âm thanh riêng, điền URL vào đây:
+        const CUSTOM_ALARM_SOUND = 'https://github.com/nhathao1503/alarm-sound/raw/refs/heads/main/snaptt.me-36290413.mp3'; 
+        // Ví dụ: const CUSTOM_ALARM_SOUND = '';
+        // Hoặc: const CUSTOM_ALARM_SOUND = 'alarm.mp3'; (nếu file cùng thư mục)
+
+        // ========== DỮ LIỆU ==========
+        let tasks = [];
+        let audioContext = null;
+        let alarmInterval = null;
+        let currentAlarmTaskId = null;
+
+        // ========== AUDIO SETUP ==========
+        if (CUSTOM_ALARM_SOUND) {
+            document.getElementById('customAlarmAudio').src = CUSTOM_ALARM_SOUND;
+        }
+
+        // ========== NOTIFICATION ==========
+        function checkNotificationPermission() {
+            if (!("Notification" in window)) {
+                console.log("Trình duyệt không hỗ trợ thông báo");
+                return;
+            }
+
+            if (Notification.permission === "default") {
+                document.getElementById('notificationBanner').style.display = 'flex';
+            }
+        }
+
+        function requestNotificationPermission() {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    document.getElementById('notificationBanner').style.display = 'none';
+                    new Notification("To-Do List", {
+                        body: "Thông báo đã được bật! Bạn sẽ nhận được nhắc nhở khi đến giờ.",
+                    });
+                }
+            });
+        }
+
+        // ========== ALARM SOUND ==========
+        function playAlarmSound() {
+            if (CUSTOM_ALARM_SOUND) {
+                // Dùng file âm thanh custom
+                const audio = document.getElementById('customAlarmAudio');
+                audio.loop = true;
+                audio.play().catch(err => console.log('Không thể phát âm thanh:', err));
+            } else {
+                // Tạo âm thanh tự động bằng Web Audio API
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                function playBeep() {
+                    // Beep 1
+                    const oscillator1 = audioContext.createOscillator();
+                    const gainNode1 = audioContext.createGain();
+                    
+                    oscillator1.connect(gainNode1);
+                    gainNode1.connect(audioContext.destination);
+                    
+                    oscillator1.frequency.value = 800; // Tần số Hz
+                    oscillator1.type = 'sine';
+                    
+                    gainNode1.gain.setValueAtTime(0, audioContext.currentTime);
+                    gainNode1.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                    gainNode1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    
+                    oscillator1.start(audioContext.currentTime);
+                    oscillator1.stop(audioContext.currentTime + 0.3);
+
+                    // Beep 2 (sau 150ms)
+                    setTimeout(() => {
+                        const oscillator2 = audioContext.createOscillator();
+                        const gainNode2 = audioContext.createGain();
+                        
+                        oscillator2.connect(gainNode2);
+                        gainNode2.connect(audioContext.destination);
+                        
+                        oscillator2.frequency.value = 1000;
+                        oscillator2.type = 'sine';
+                        
+                        gainNode2.gain.setValueAtTime(0, audioContext.currentTime);
+                        gainNode2.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                        gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        
+                        oscillator2.start(audioContext.currentTime);
+                        oscillator2.stop(audioContext.currentTime + 0.3);
+                    }, 150);
+                }
+
+                // Phát beep liên tục mỗi 1 giây
+                playBeep();
+                alarmInterval = setInterval(playBeep, 1000);
+            }
+        }
+
+        function stopAlarmSound() {
+            // Dừng interval
+            if (alarmInterval) {
+                clearInterval(alarmInterval);
+                alarmInterval = null;
+            }
+
+            // Dừng custom audio
+            const audio = document.getElementById('customAlarmAudio');
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.loop = false;
+            }
+        }
+
+        function stopAlarm() {
+            stopAlarmSound();
+            document.getElementById('alarmBanner').style.display = 'none';
+            currentAlarmTaskId = null;
+        }
+
+        // ========== TASK MANAGEMENT ==========
+        function loadTasks() {
+            const saved = localStorage.getItem('tasks');
+            if (saved) {
+                tasks = JSON.parse(saved);
+                renderTasks();
+            }
+        }
+
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const dateInput = document.getElementById('taskDate');
+            const timeInput = document.getElementById('taskTime');
+            
+            const text = input.value.trim();
+            
+            if (text === '') {
+                alert('Vui lòng nhập công việc!');
+                return;
+            }
+
+            const newTask = {
+                id: Date.now(),
+                text: text,
+                completed: false,
+                date: dateInput.value,
+                time: timeInput.value,
+                notified: false
+            };
+
+            tasks.push(newTask);
+            saveTasks();
+            renderTasks();
+            
+            // Reset form
+            input.value = '';
+            dateInput.value = new Date().toISOString().split('T')[0];
+            timeInput.value = '';
+            input.focus();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveTasks();
+            renderTasks();
+            
+            // Nếu đang báo thức task này, tắt báo thức
+            if (currentAlarmTaskId === id) {
+                stopAlarm();
+            }
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    task.completed = !task.completed;
+                }
+                return task;
+            });
+            saveTasks();
+            renderTasks();
+            
+            // Nếu hoàn thành task đang báo thức, tắt báo thức
+            if (currentAlarmTaskId === id) {
+                stopAlarm();
+            }
+        }
+
+        function formatDateTime(date, time) {
+            if (!date && !time) return '';
+            
+            let result = '';
+            if (date) {
+                const d = new Date(date);
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                if (d.toDateString() === today.toDateString()) {
+                    result = 'Hôm nay';
+                } else if (d.toDateString() === tomorrow.toDateString()) {
+                    result = 'Ngày mai';
+                } else {
+                    result = d.toLocaleDateString('vi-VN');
+                }
+            }
+            
+            if (time) {
+                result += (result ? ', ' : '') + time;
+            }
+            
+            return result;
+        }
+
+        function checkReminders() {
+            const now = new Date();
+            
+            tasks.forEach(task => {
+                if (task.completed || task.notified || !task.date || !task.time) {
+                    return;
+                }
+                
+                const taskDateTime = new Date(task.date + ' ' + task.time);
+                const timeDiff = taskDateTime - now;
+                
+                // Nếu đến giờ (trong khoảng 60 giây)
+                if (timeDiff > 0 && timeDiff <= 60000) {
+                    showNotification(task);
+                    playAlarmSound();
+                    
+                    // Hiển thị banner báo thức
+                    document.getElementById('alarmTaskText').textContent = task.text;
+                    document.getElementById('alarmBanner').style.display = 'flex';
+                    currentAlarmTaskId = task.id;
+                    
+                    task.notified = true;
+                    saveTasks();
+                }
+            });
+        }
+
+        function showNotification(task) {
+            if (Notification.permission === "granted") {
+                const notification = new Notification("⏰ Nhắc nhở công việc!", {
+                    body: task.text,
+                    requireInteraction: true,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%231a73e8"/><text x="50" y="70" font-size="50" text-anchor="middle" fill="white">⏰</text></svg>'
+                });
+                
+                notification.onclick = () => {
+                    window.focus();
+                    notification.close();
+                };
+            }
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (tasks.length === 0) {
+                taskList.innerHTML = '';
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+                
+                // Sắp xếp
+                const sortedTasks = [...tasks].sort((a, b) => {
+                    if (a.completed !== b.completed) {
+                        return a.completed ? 1 : -1;
+                    }
+                    if (a.date && b.date) {
+                        return new Date(a.date + ' ' + (a.time || '00:00')) - new Date(b.date + ' ' + (b.time || '00:00'));
+                    }
+                    if (a.date) return -1;
+                    if (b.date) return 1;
+                    return 0;
+                });
+                
+                taskList.innerHTML = sortedTasks.map(task => {
+                    const dateTimeStr = formatDateTime(task.date, task.time);
+                    const isUrgent = task.date && task.time && !task.completed && 
+                                    new Date(task.date + ' ' + task.time) <= new Date(Date.now() + 3600000);
+                    
+                    return `
+                        <li class="task-item">
+                            <div class="checkbox ${task.completed ? 'checked' : ''}" 
+                                 onclick="toggleTask(${task.id})">
+                            </div>
+                            <div class="task-content">
+                                <div class="task-text ${task.completed ? 'completed' : ''}">
+                                    ${task.text}
+                                </div>
+                                ${dateTimeStr ? `
+                                    <div class="task-time ${isUrgent ? 'urgent' : ''}">
+                                        🕐 ${dateTimeStr} ${isUrgent ? '⚠️' : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="delete-btn" onclick="deleteTask(${task.id})">
+                                ×
+                            </div>
+                        </li>
+                    `;
+                }).join('');
+            }
+        }
+
+        // ========== KHỞI ĐỘNG ==========
+        loadTasks();
+        checkNotificationPermission();
+        
+        // Kiểm tra nhắc nhở mỗi 10 giây
+        setInterval(checkReminders, 10000);
+        checkReminders();
+
+        // Set ngày hiện tại
+        document.getElementById('taskDate').valueAsDate = new Date();
+    </script>
+</body>
+</html>
