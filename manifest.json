@@ -1,18 +1,15 @@
 {
-  "short_name": "ToDo-List",
-  "name": "ToDo-List",
+  "name": "Todo-List",
+  "short_name": "Todo-List",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a73e8",
   "icons": [
     {
-      "src": "anh.jpg",
-      "sizes": "512x512",
+      "src": "https://raw.githubusercontent.com/nhathao1503/alarm-sound/refs/heads/main/anh.jpg",
+      "sizes": "192x192",
       "type": "image/jpg"
     }
-  ],
-  "start_url": "https://raw.githubusercontent.com/nhathao1503/alarm-sound/a0321b8ec042228e736390c688094b4b815488d6/anh.jpg",
-  "display": "standalone",
-  "theme_color": "#1a73e8",
-  "background_color": "#ffffff"
+  ]
 }
-
-
-
