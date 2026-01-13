@@ -8,10 +8,11 @@
       "type": "image/jpg"
     }
   ],
-  "start_url": "https://github.com/nhathao1503/alarm-sound/blob/main/anh.jpg.jpg",
+  "start_url": "https://raw.githubusercontent.com/nhathao1503/alarm-sound/a0321b8ec042228e736390c688094b4b815488d6/anh.jpg",
   "display": "standalone",
   "theme_color": "#1a73e8",
   "background_color": "#ffffff"
 }
+
 
 
