@@ -7,9 +7,10 @@
   "theme_color": "#1a73e8",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/nhathao1503/alarm-sound/refs/heads/main/anh.jpg",
+      "src": ".",
       "sizes": "192x192",
       "type": "image/jpg"
     }
   ]
 }
+
