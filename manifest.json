@@ -8,8 +8,9 @@
       "type": "image/jpg"
     }
   ],
-  "start_url": ".",
+  "start_url": "https://github.com/nhathao1503/anh-jpg/blob/main/anh.jpg?raw=true",
   "display": "standalone",
   "theme_color": "#1a73e8",
   "background_color": "#ffffff"
 }
+
