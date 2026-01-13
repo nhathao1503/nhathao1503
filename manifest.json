@@ -1,18 +1,15 @@
 {
-  "name": "Todo-List",
-  "short_name": "Todo-List",
-  "start_url": "index.html",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1a73e8",
+  "short_name": "ToDo-List",
+  "name": "ToDo-List",
   "icons": [
     {
       "src": "anh.jpg",
-      "sizes": "192x192",
+      "sizes": "512x512",
       "type": "image/jpg"
     }
-  ]
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1a73e8",
+  "background_color": "#ffffff"
 }
-
-
-
