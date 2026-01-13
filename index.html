@@ -1,873 +1,508 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To-Do List - Có Báo Thức</title>
+    <title>Todo-List</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* --- PASTEL THEME COLORS (MÀU PHẤN) --- */
+        :root {
+            --primary: #9d8ec4; 
+            --bg-body: #fdfcf5;
+            --bg-card: #ffffff;
+            --text-main: #5d5b6a;
+            --text-sub: #9e9cb0;
+            --border: #f0eff4;
+            --shadow: 0 8px 24px rgba(149, 157, 165, 0.1);
+            
+            --danger: #ffadad;  
+            --warning: #ffd6a5; 
+            --success: #caffbf; 
         }
 
+        [data-theme="dark"] {
+            --bg-body: #23222b;
+            --bg-card: #2e2c38;
+            --text-main: #e4e4e8;
+            --text-sub: #8f8d9e;
+            --border: #3e3c4a;
+            --primary: #c7ceea; 
+            --shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f8f9fa;
-            color: #202124;
-        }
-
-        .container {
-            display: flex;
+            font-family: 'Segoe UI', 'Nunito', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: 0.3s;
             height: 100vh;
+            overflow: hidden;
         }
 
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background-color: #fff;
-            border-right: 1px solid #e0e0e0;
-            padding: 20px 0;
-        }
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 0 20px;
-            margin-bottom: 30px;
+        /* --- LOGIN --- */
+        .auth-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
         }
+        .auth-box {
+            background: var(--bg-card); padding: 40px; border-radius: 24px;
+            box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center;
+            border: 2px solid var(--border);
+        }
+        .auth-title { font-size: 26px; margin-bottom: 20px; color: var(--primary); font-weight: 700; }
+        .auth-input {
+            width: 100%; padding: 14px; margin-bottom: 15px; border: 2px solid var(--border);
+            border-radius: 16px; background: var(--bg-body); color: var(--text-main); outline: none; transition: 0.2s;
+        }
+        .auth-input:focus { border-color: var(--primary); }
+        .auth-btn {
+            width: 100%; padding: 14px; border: none; border-radius: 16px;
+            background: var(--primary); color: #fff; font-weight: bold; cursor: pointer; margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(157, 142, 196, 0.3); transition: 0.2s;
+        }
+        .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(157, 142, 196, 0.4); }
+        .auth-switch { color: var(--text-sub); font-size: 14px; cursor: pointer; text-decoration: underline; }
 
+        /* --- LOGO --- */
         .logo-icon {
-            width: 32px;
-            height: 32px;
-            background-color: #1a73e8;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
+            width: 50px; height: 50px; 
+            background-color: #1a73e8; 
+            border-radius: 14px; color: #fff; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 28px;
+            box-shadow: 0 4px 10px rgba(26, 115, 232, 0.3);
         }
 
-        .logo-text {
-            font-size: 22px;
-            color: #202124;
-            font-weight: 600;
+        /* --- APP LAYOUT --- */
+        .app-container { display: none; height: 100vh; }
+        .app-container.active { display: flex; }
+
+        .sidebar {
+            width: 270px; background-color: var(--bg-card);
+            border-right: 2px solid var(--border); padding: 25px 15px;
+            display: flex; flex-direction: column;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; padding: 10px 10px; margin-bottom: 30px; }
+        .logo .logo-icon { width: 40px; height: 40px; font-size: 22px; }
+        .logo-text { font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: 0.5px; }
+        
+        .user-info { 
+            padding: 12px 15px; margin-bottom: 20px; 
+            background: rgba(157, 142, 196, 0.1); border-radius: 16px; 
+            font-size: 14px; color: var(--primary); font-weight: 600;
         }
 
-        .menu-item {
-            padding: 12px 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #5f6368;
-            transition: background-color 0.2s;
+        .menu-item { 
+            padding: 14px 18px; margin-bottom: 8px; cursor: pointer; 
+            display: flex; align-items: center; gap: 15px; 
+            color: var(--text-sub); border-radius: 16px; font-weight: 600; transition: 0.2s;
         }
+        .menu-item:hover { background-color: var(--bg-body); color: var(--primary); }
+        .menu-item.active { background-color: rgba(157, 142, 196, 0.15); color: var(--primary); }
+        .logout-btn { margin-top: auto; color: var(--danger); }
+        .logout-btn:hover { background-color: rgba(255, 173, 173, 0.1); color: var(--danger); }
 
-        .menu-item:hover {
-            background-color: #f1f3f4;
-        }
+        /* --- MAIN CONTENT --- */
+        .main-content { flex: 1; padding: 40px 10%; overflow-y: auto; }
+        .header h1 { font-size: 28px; margin-bottom: 25px; color: var(--text-main); }
+        
+        .progress-container { background: var(--border); height: 12px; border-radius: 20px; margin-bottom: 35px; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #caffbf, #9bf6ff); width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 20px; }
+        .progress-text { font-size: 13px; color: var(--text-sub); margin-bottom: 8px; text-align: right; display: block; font-weight: 600;}
 
-        .menu-item.active {
-            background-color: #e8f0fe;
-            color: #1a73e8;
-            border-right: 3px solid #1a73e8;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 40px 60px;
-            overflow-y: auto;
-        }
-
-        .header {
-            margin-bottom: 30px;
-        }
-
-        .title {
-            font-size: 28px;
-            color: #202124;
-            margin-bottom: 20px;
-        }
-
-        /* Add Task Form */
+        /* --- INPUT AREA --- */
         .add-task {
-            background-color: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
+            background: var(--bg-card); border-radius: 20px; padding: 20px;
+            box-shadow: var(--shadow); 
+            display: flex; flex-direction: column; gap: 15px;
+            margin-bottom: 35px; border: 2px solid transparent; transition: 0.3s;
         }
+        .add-task:focus-within { border-color: var(--primary); transform: translateY(-2px); }
+        .add-task.editing { border-color: var(--warning); }
+        
+        .input-row { display: flex; align-items: center; gap: 15px; }
+        .add-icon { font-size: 26px; cursor: pointer; color: var(--primary); transition: 0.2s; }
+        .add-icon:hover { transform: rotate(90deg); }
+        .mic-icon { font-size: 22px; color: var(--text-sub); cursor: pointer; padding: 10px; border-radius: 50%; transition: 0.2s;}
+        .mic-icon:hover { background: rgba(0,0,0,0.05); color: var(--primary); }
+        .mic-icon.listening { color: var(--danger); background: rgba(255, 173, 173, 0.2); animation: pulse 1.5s infinite; }
 
-        .task-input-row {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
+        #taskInput { flex: 1; border: none; outline: none; font-size: 17px; background: transparent; color: var(--text-main); font-weight: 500; }
+        #taskInput::placeholder { color: #ccc; }
+
+        .options-row { display: flex; justify-content: space-between; align-items: center; padding-left: 40px; }
+        .quick-date-group { display: flex; gap: 10px; align-items: center; }
+        
+        .chip {
+            border: 2px solid var(--border); background: var(--bg-body); color: var(--text-sub);
+            padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: 0.2s; font-weight: 600;
         }
+        .chip:hover { border-color: var(--primary); color: var(--primary); }
+        .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 10px rgba(157, 142, 196, 0.3); }
 
-        .add-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            border: 2px solid #1a73e8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #1a73e8;
-            font-size: 20px;
-            cursor: pointer;
-            flex-shrink: 0;
+        .date-picker-wrapper {
+            position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; cursor: pointer; transition: 0.2s; background: var(--bg-body); border: 2px solid var(--border);
         }
+        .date-picker-wrapper:hover { border-color: var(--primary); }
+        #taskDate { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        
+        .time-input-compact { border: none; background: transparent; color: var(--text-sub); font-size: 13px; outline: none; font-weight: 600; cursor: pointer; }
 
-        .add-icon:hover {
-            background-color: #e8f0fe;
+        .add-btn { 
+            background: var(--primary); color: #fff; border: none; 
+            padding: 10px 24px; border-radius: 20px; cursor: pointer; font-weight: 700; font-size: 14px;
+            box-shadow: 0 4px 10px rgba(157, 142, 196, 0.3); transition: 0.2s;
         }
+        .add-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(157, 142, 196, 0.4); }
+        .add-btn.update-mode { background: var(--warning); color: #5d4037; box-shadow: 0 4px 10px rgba(255, 214, 165, 0.4); }
 
-        #taskInput {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            padding: 8px 0;
-            border-bottom: 1px solid transparent;
-            background-color: transparent;
-        }
+        #selectedDateLabel { font-size: 13px; color: var(--primary); font-weight: 600; display: none; margin-left: 5px;}
 
-        #taskInput:focus {
-            border-bottom: 1px solid #1a73e8;
-        }
-
-        .datetime-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            padding-left: 39px;
-        }
-
-        .datetime-input {
-            padding: 8px 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #5f6368;
-            outline: none;
-        }
-
-        .datetime-input:focus {
-            border-color: #1a73e8;
-        }
-
-        .add-btn {
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .add-btn:hover {
-            background-color: #1557b0;
-        }
-
-        /* Task List */
-        .task-list {
-            list-style: none;
-        }
-
+        /* TASK LIST STYLE */
+        .task-list { list-style: none; }
         .task-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-            padding: 15px;
-            border-bottom: 1px solid #e0e0e0;
-            background-color: #fff;
-            margin-bottom: 5px;
-            border-radius: 4px;
+            display: flex; align-items: flex-start; gap: 18px; 
+            padding: 16px 20px; background: var(--bg-card); margin-bottom: 12px;
+            border-radius: 18px; border: 1px solid transparent;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: 0.2s;
         }
+        .task-item:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--border); }
+        .task-item.important { border-left: 5px solid var(--warning); background: #fffcf5; }
+        [data-theme="dark"] .task-item.important { background: #38362e; }
 
-        .task-item:hover {
-            background-color: #f8f9fa;
+        .checkbox { 
+            width: 24px; height: 24px; border: 2px solid var(--text-sub); 
+            border-radius: 8px; cursor: pointer; position: relative; flex-shrink: 0; margin-top: 2px; transition: 0.2s;
         }
-
-        .checkbox {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #5f6368;
-            border-radius: 50%;
-            cursor: pointer;
-            flex-shrink: 0;
-            position: relative;
-            margin-top: 2px;
+        .checkbox:hover { border-color: var(--primary); }
+        .checkbox.checked { background: var(--success); border-color: var(--success); transform: scale(1.1); }
+        .checkbox.checked::after { content: '✓'; color: #fff; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 14px; font-weight: bold; }
+        
+        .task-content { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .task-text { font-size: 16px; line-height: 1.5; color: var(--text-main); font-weight: 500;}
+        .task-text.completed { text-decoration: line-through; opacity: 0.5; color: var(--text-sub); }
+        
+        .date-badge {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+            background-color: var(--bg-body); border-radius: 14px; 
+            font-size: 12px; font-weight: 600; color: var(--text-sub); width: fit-content;
         }
+        .date-badge.overdue { background-color: #ffeff0; color: #ff6b6b; } 
+        [data-theme="dark"] .date-badge.overdue { background-color: rgba(255, 173, 173, 0.2); color: #ffadad; }
 
-        .checkbox.checked {
-            background-color: #1a73e8;
-            border-color: #1a73e8;
-        }
+        .actions { display: flex; gap: 8px; align-self: flex-start; }
+        .icon-btn { cursor: pointer; font-size: 18px; color: #d1d1d6; transition: 0.2s; padding: 6px; border-radius: 50%;}
+        .icon-btn:hover { color: var(--primary); background: rgba(157, 142, 196, 0.1); }
+        .star-btn.active { color: var(--warning); opacity: 1; text-shadow: 0 0 10px rgba(255, 214, 165, 0.6); }
+        .delete-btn:hover { color: var(--danger); background: rgba(255, 173, 173, 0.1); }
 
-        .checkbox.checked::after {
-            content: '✓';
-            color: white;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 14px;
-        }
-
-        .task-content {
-            flex: 1;
-        }
-
-        .task-text {
-            font-size: 16px;
-            color: #202124;
-            margin-bottom: 5px;
-        }
-
-        .task-text.completed {
-            text-decoration: line-through;
-            color: #5f6368;
-        }
-
-        .task-time {
-            font-size: 13px;
-            color: #5f6368;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .task-time.urgent {
-            color: #d93025;
-            font-weight: 500;
-        }
-
-        .delete-btn {
-            color: #5f6368;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.2s;
-            font-size: 20px;
-            padding: 0 5px;
-        }
-
-        .task-item:hover .delete-btn {
-            opacity: 1;
-        }
-
-        .delete-btn:hover {
-            color: #d93025;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #5f6368;
-            background-color: #fff;
-            border-radius: 8px;
-        }
-
-        .empty-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-        }
-
-        .empty-text {
-            font-size: 16px;
-        }
-
-        /* Notification Permission */
-        .notification-banner {
-            background-color: #fff3cd;
-            border: 1px solid #ffc107;
-            padding: 12px 20px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            display: none;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .notification-banner button {
-            background-color: #ffc107;
-            border: none;
-            padding: 6px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .notification-banner button:hover {
-            background-color: #e0a800;
-        }
-
-        /* Alarm Alert Banner */
         .alarm-banner {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border: 2px solid #f59e0b;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            animation: alarmPulse 1s infinite;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            background: #fff8e1; border-left: 5px solid var(--warning); padding: 15px;
+            border-radius: 16px; margin-bottom: 20px; display: none; align-items: center; justify-content: space-between;
+            color: #333; animation: slideDown 0.3s; box-shadow: var(--shadow);
         }
-
-        @keyframes alarmPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        .alarm-content {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .alarm-icon {
-            font-size: 40px;
-            animation: shake 0.5s infinite;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(-10deg); }
-            75% { transform: rotate(10deg); }
-        }
-
-        .alarm-text {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .alarm-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #92400e;
-        }
-
-        .alarm-task {
-            font-size: 14px;
-            color: #78350f;
-        }
-
-        .stop-alarm-btn {
-            background-color: #f59e0b;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .stop-alarm-btn:hover {
-            background-color: #d97706;
-            transform: scale(1.05);
-        }
-
-        /* Footer Info */
-        .footer-info {
-            margin-top: 40px;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .footer-info h3 {
-            font-size: 14px;
-            color: #5f6368;
-            margin-bottom: 10px;
-        }
-
-        .footer-info ul {
-            list-style: none;
-            font-size: 13px;
-            color: #5f6368;
-            line-height: 1.8;
-        }
-
-        .footer-info ul li::before {
-            content: '• ';
-            color: #1a73e8;
-            font-weight: bold;
-        }
-
-        .info-box {
-            background-color: #e8f5e9;
-            border-left: 4px solid #4caf50;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 4px;
-        }
-
-        .info-box h4 {
-            color: #2e7d32;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .info-box p {
-            font-size: 13px;
-            color: #1b5e20;
-            line-height: 1.6;
-        }
-
-        .info-box code {
-            background-color: #c8e6c9;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: monospace;
-        }
+        @keyframes slideDown { from {opacity:0; transform:translateY(-10px);} to {opacity:1; transform:translateY(0);} }
+        .empty-state { text-align: center; padding: 60px 0; color: var(--text-sub); display: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Sidebar -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="auth-container" id="authView">
+        <div class="auth-box">
+            <div class="logo-icon" style="margin: 0 auto 20px auto;">✓</div>
+            <h2 class="auth-title" id="authTitle">Hello!</h2>
+            <input type="text" id="username" class="auth-input" placeholder="Tên đăng nhập">
+            <input type="password" id="password" class="auth-input" placeholder="Mật khẩu">
+            <button class="auth-btn" onclick="handleAuth()" id="authBtn">Vào thôi</button>
+            <div class="auth-switch" onclick="switchAuthMode()">
+                <span id="switchText">Người mới? Đăng ký ngay</span>
+            </div>
+            <p style="margin-top:15px; font-size:12px; color:var(--text-sub); opacity: 0.7;">🔒 Dữ liệu của bạn an toàn trên máy này.</p>
+        </div>
+    </div>
+
+    <div class="container app-container" id="appView">
         <div class="sidebar">
             <div class="logo">
                 <div class="logo-icon">✓</div>
-                <div class="logo-text">To-Do List</div>
+                <div class="logo-text">Todo-List</div>
             </div>
-            <div class="menu-item active">
-                <span>📋</span>
-                <span>Việc cần làm của tôi</span>
-            </div>
-            <div class="menu-item">
-                <span>⭐</span>
-                <span>Quan trọng</span>
-            </div>
-            <div class="menu-item">
-                <span>🔔</span>
-                <span>Có nhắc nhở</span>
+            <div class="user-info">👋 Chào, <span id="displayUsername">User</span></div>
+            
+            <div class="menu-item nav-item active" onclick="setFilter('all')"><span>📋</span> Tất cả</div>
+            <div class="menu-item nav-item" onclick="setFilter('important')"><span>⭐️</span> Quan trọng</div>
+            <div class="menu-item nav-item" onclick="setFilter('reminders')"><span>⏰</span> Nhắc nhở</div>
+            <div class="menu-item nav-item" onclick="setFilter('completed')"><span>🎉</span> Đã xong</div>
+            
+            <div class="menu-item logout-btn" onclick="logout()"><span>🚪</span> Đăng xuất</div>
+            <div class="theme-switch" style="margin-top: 15px; padding: 15px; border-top: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size:14px; font-weight:600; color:var(--text-sub)">🌙 Chế độ tối</span>
+                <input type="checkbox" id="themeToggle" onchange="toggleTheme()" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="main-content">
-            <div class="header">
-                <h1 class="title">Việc cần làm của tôi</h1>
-            </div>
+            <div class="header"><h1 id="listTitle">Tất cả công việc</h1></div>
+            <span class="progress-text" id="progressText">0% hoàn thành</span>
+            <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
 
-            <!-- Notification Permission Banner -->
-            <div class="notification-banner" id="notificationBanner">
-                <span>🔔 Cho phép thông báo để nhận nhắc nhở công việc</span>
-                <button onclick="requestNotificationPermission()">Cho phép</button>
-            </div>
-
-            <!-- Alarm Alert Banner -->
             <div class="alarm-banner" id="alarmBanner">
-                <div class="alarm-content">
-                    <div class="alarm-icon">⏰</div>
-                    <div class="alarm-text">
-                        <div class="alarm-title">Báo thức đang reo!</div>
-                        <div class="alarm-task" id="alarmTaskText"></div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="font-size:24px; animation: shake 0.5s infinite;">⏰</div>
+                    <div><strong>Đến giờ rồi!</strong><div id="alarmTaskText"></div></div>
+                </div>
+                <button onclick="stopAlarm()" style="padding:8px 16px; background:var(--danger); color:white; border:none; border-radius:12px; cursor:pointer; font-weight:bold;">Tắt nha</button>
+            </div>
+
+            <div class="add-task" id="inputContainer">
+                <div class="input-row">
+                    <div class="add-icon" onclick="resetInput()" title="Reset">+</div>
+                    <input type="text" id="taskInput" placeholder="Hôm nay bạn muốn làm gì?..." onkeypress="if(event.key==='Enter') saveTask()">
+                    <div class="mic-icon" id="micBtn" onclick="toggleVoiceInput()" title="Nói để nhập">🎙️</div>
+                </div>
+                
+                <div class="options-row">
+                    <div class="quick-date-group">
+                        <button class="chip" id="btnToday" onclick="setQuickDate('today')">Hôm nay</button>
+                        <button class="chip" id="btnTomorrow" onclick="setQuickDate('tomorrow')">Ngày mai</button>
+                        <div class="date-picker-wrapper" title="Chọn ngày">
+                            <span style="font-size:16px">🗓</span>
+                            <input type="date" id="taskDate" onchange="handleDateChange(this)">
+                        </div>
+                        <span id="selectedDateLabel"></span>
+                        <input type="time" id="taskTime" class="time-input-compact" title="Chọn giờ">
                     </div>
-                </div>
-                <button class="stop-alarm-btn" onclick="stopAlarm()">Tắt báo thức</button>
-            </div>
-
-            <!-- Add Task -->
-            <div class="add-task">
-                <div class="task-input-row">
-                    <div class="add-icon" onclick="document.getElementById('taskInput').focus()">+</div>
-                    <input 
-                        type="text" 
-                        id="taskInput" 
-                        placeholder="Thêm việc cần làm"
-                        onkeypress="if(event.key==='Enter') addTask()"
-                    >
-                </div>
-                <div class="datetime-row">
-                    <span style="font-size: 14px; color: #5f6368;">🕐</span>
-                    <input 
-                        type="date" 
-                        id="taskDate" 
-                        class="datetime-input"
-                    >
-                    <input 
-                        type="time" 
-                        id="taskTime" 
-                        class="datetime-input"
-                    >
-                    <button class="add-btn" onclick="addTask()">Thêm</button>
+                    <button class="add-btn" id="saveBtn" onclick="saveTask()">Thêm</button>
                 </div>
             </div>
 
-            <!-- Task List -->
-            <ul class="task-list" id="taskList">
-                <!-- Tasks will be added here -->
-            </ul>
-
-            <!-- Empty State -->
+            <ul class="task-list" id="taskList"></ul>
             <div class="empty-state" id="emptyState">
-                <div class="empty-icon">📝</div>
-                <div class="empty-text">Chưa có việc cần làm. Hãy thêm công việc mới!</div>
-            </div>
-
-            <!-- Footer Info -->
-            <div class="footer-info">
-                <h3>🎓 Kiến trúc ứng dụng Client-side</h3>
-                <ul>
-                    <li><strong>HTML:</strong> Cấu trúc giao diện</li>
-                    <li><strong>CSS:</strong> Thiết kế và trang trí</li>
-                    <li><strong>JavaScript:</strong> Xử lý logic (thêm, xóa, hoàn thành, nhắc nhở)</li>
-                    <li><strong>LocalStorage:</strong> Lưu trữ dữ liệu trên trình duyệt</li>
-                    <li><strong>Notification API:</strong> Thông báo nhắc nhở công việc</li>
-                    <li><strong>Web Audio API:</strong> Âm thanh báo thức giống điện thoại 🔊</li>
-                </ul>
-
-                <div class="info-box">
-                    <h4>🎵 Tùy chỉnh âm thanh báo thức</h4>
-                    <p>
-                        <strong>Hiện tại:</strong> Dùng âm thanh tạo tự động (Web Audio API)<br>
-                        <strong>Nếu muốn dùng file nhạc riêng:</strong> Tìm dòng <code>const CUSTOM_ALARM_SOUND = '';</code> 
-                        trong phần &lt;script&gt; và thay bằng URL file MP3 của bạn.<br>
-                        <strong>Ví dụ:</strong> <code>const CUSTOM_ALARM_SOUND = 'alarm.mp3';</code>
-                    </p>
-                </div>
+                <div style="font-size:60px; opacity:0.3; margin-bottom: 10px;">🍃</div>
+                <p>Thảnh thơi quá, chưa có việc gì!</p>
             </div>
         </div>
     </div>
 
-    <!-- Hidden audio element -->
-    <audio id="customAlarmAudio" preload="auto"></audio>
-
     <script>
-        // ========== CẤU HÌNH ÂM THANH ==========
-        // Nếu muốn dùng file âm thanh riêng, điền URL vào đây:
-        const CUSTOM_ALARM_SOUND = 'https://github.com/nhathao1503/alarm-sound/raw/refs/heads/main/snaptt.me-36290413.mp3'; 
-        // Ví dụ: const CUSTOM_ALARM_SOUND = '';
-        // Hoặc: const CUSTOM_ALARM_SOUND = 'alarm.mp3'; (nếu file cùng thư mục)
+        let tasks = [], currentFilter = 'all', currentUser = null, isRegisterMode = false, editingId = null;
+        let audioContext = null, alarmInterval = null, currentAlarmTaskId = null;
 
-        // ========== DỮ LIỆU ==========
-        let tasks = [];
-        let audioContext = null;
-        let alarmInterval = null;
-        let currentAlarmTaskId = null;
-
-        // ========== AUDIO SETUP ==========
-        if (CUSTOM_ALARM_SOUND) {
-            document.getElementById('customAlarmAudio').src = CUSTOM_ALARM_SOUND;
-        }
-
-        // ========== NOTIFICATION ==========
-        function checkNotificationPermission() {
-            if (!("Notification" in window)) {
-                console.log("Trình duyệt không hỗ trợ thông báo");
-                return;
+        // --- CONFETTI (PHÁO HOA) ---
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            const pieces = [];
+            const colors = ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff']; 
+            for (let i = 0; i < 150; i++) pieces.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height-canvas.height, color: colors[Math.floor(Math.random()*colors.length)], radius: Math.random()*5+2, speed: Math.random()*5+2, rotation: Math.random()*360, rotationSpeed: Math.random()*10-5 });
+            function update() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach((p, i) => {
+                    p.y += p.speed; p.rotation += p.rotationSpeed;
+                    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation*Math.PI/180);
+                    ctx.fillStyle = p.color; ctx.fillRect(-p.radius, -p.radius, p.radius*2, p.radius*2); ctx.restore();
+                    if (p.y > canvas.height) pieces.splice(i, 1);
+                });
+                if (pieces.length > 0) requestAnimationFrame(update); else ctx.clearRect(0,0,canvas.width,canvas.height);
             }
-
-            if (Notification.permission === "default") {
-                document.getElementById('notificationBanner').style.display = 'flex';
-            }
+            update();
         }
 
-        function requestNotificationPermission() {
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    document.getElementById('notificationBanner').style.display = 'none';
-                    new Notification("To-Do List", {
-                        body: "Thông báo đã được bật! Bạn sẽ nhận được nhắc nhở khi đến giờ.",
-                    });
-                }
-            });
+        // --- VOICE ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        if(SpeechRecognition) {
+            recognition = new SpeechRecognition(); recognition.lang = 'vi-VN'; recognition.continuous = false;
+            recognition.onstart = function() { document.getElementById('micBtn').classList.add('listening'); document.getElementById('taskInput').placeholder = "Đang lắng nghe..."; };
+            recognition.onend = function() { document.getElementById('micBtn').classList.remove('listening'); document.getElementById('taskInput').placeholder = "Hôm nay bạn muốn làm gì?..."; };
+            recognition.onresult = function(e) { document.getElementById('taskInput').value = e.results[0][0].transcript; };
+        }
+        function toggleVoiceInput() {
+            if(!recognition) return alert("Trình duyệt không hỗ trợ Mic.");
+            if(document.getElementById('micBtn').classList.contains('listening')) recognition.stop(); else recognition.start();
         }
 
-        // ========== ALARM SOUND ==========
-        function playAlarmSound() {
-            if (CUSTOM_ALARM_SOUND) {
-                // Dùng file âm thanh custom
-                const audio = document.getElementById('customAlarmAudio');
-                audio.loop = true;
-                audio.play().catch(err => console.log('Không thể phát âm thanh:', err));
+        // --- AUTH ---
+        function switchAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            const els = { title: 'authTitle', btn: 'authBtn', text: 'switchText' };
+            if(isRegisterMode) { document.getElementById(els.title).innerText="Đăng Ký"; document.getElementById(els.btn).innerText="Tạo tài khoản"; document.getElementById(els.text).innerText="Đã có tài khoản?"; } 
+            else { document.getElementById(els.title).innerText="Hello!"; document.getElementById(els.btn).innerText="Vào thôi"; document.getElementById(els.text).innerText="Người mới? Đăng ký ngay"; }
+        }
+        function handleAuth() {
+            const u = document.getElementById('username').value.trim(), p = document.getElementById('password').value.trim();
+            if(!u || !p) return alert("Nhập đủ thông tin nha!");
+            let users = JSON.parse(localStorage.getItem('todo_users')) || [];
+            if(isRegisterMode) {
+                if(users.find(x => x.username === u)) return alert("Tên này có người dùng rồi!");
+                users.push({username:u, password:p}); localStorage.setItem('todo_users', JSON.stringify(users));
+                alert("Chào mừng bạn mới!"); switchAuthMode();
             } else {
-                // Tạo âm thanh tự động bằng Web Audio API
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-
-                function playBeep() {
-                    // Beep 1
-                    const oscillator1 = audioContext.createOscillator();
-                    const gainNode1 = audioContext.createGain();
-                    
-                    oscillator1.connect(gainNode1);
-                    gainNode1.connect(audioContext.destination);
-                    
-                    oscillator1.frequency.value = 800; // Tần số Hz
-                    oscillator1.type = 'sine';
-                    
-                    gainNode1.gain.setValueAtTime(0, audioContext.currentTime);
-                    gainNode1.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-                    gainNode1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                    
-                    oscillator1.start(audioContext.currentTime);
-                    oscillator1.stop(audioContext.currentTime + 0.3);
-
-                    // Beep 2 (sau 150ms)
-                    setTimeout(() => {
-                        const oscillator2 = audioContext.createOscillator();
-                        const gainNode2 = audioContext.createGain();
-                        
-                        oscillator2.connect(gainNode2);
-                        gainNode2.connect(audioContext.destination);
-                        
-                        oscillator2.frequency.value = 1000;
-                        oscillator2.type = 'sine';
-                        
-                        gainNode2.gain.setValueAtTime(0, audioContext.currentTime);
-                        gainNode2.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-                        gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                        
-                        oscillator2.start(audioContext.currentTime);
-                        oscillator2.stop(audioContext.currentTime + 0.3);
-                    }, 150);
-                }
-
-                // Phát beep liên tục mỗi 1 giây
-                playBeep();
-                alarmInterval = setInterval(playBeep, 1000);
+                if(users.find(x => x.username === u && x.password === p)) loginSuccess(u); else alert("Sai tên hoặc mật khẩu rồi!");
             }
         }
-
-        function stopAlarmSound() {
-            // Dừng interval
-            if (alarmInterval) {
-                clearInterval(alarmInterval);
-                alarmInterval = null;
-            }
-
-            // Dừng custom audio
-            const audio = document.getElementById('customAlarmAudio');
-            if (audio) {
-                audio.pause();
-                audio.currentTime = 0;
-                audio.loop = false;
-            }
+        function loginSuccess(u) {
+            currentUser = u; document.getElementById('displayUsername').innerText = u;
+            document.getElementById('authView').style.display = 'none'; document.getElementById('appView').classList.add('active');
+            loadTasks(); loadTheme(); setInterval(checkReminders, 10000);
         }
+        function logout() { if(confirm("Bye bye?")) location.reload(); }
 
-        function stopAlarm() {
-            stopAlarmSound();
-            document.getElementById('alarmBanner').style.display = 'none';
-            currentAlarmTaskId = null;
-        }
-
-        // ========== TASK MANAGEMENT ==========
+        // --- DATA ---
         function loadTasks() {
-            const saved = localStorage.getItem('tasks');
-            if (saved) {
-                tasks = JSON.parse(saved);
-                renderTasks();
-            }
-        }
-
-        function saveTasks() {
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-        }
-
-        function addTask() {
-            const input = document.getElementById('taskInput');
-            const dateInput = document.getElementById('taskDate');
-            const timeInput = document.getElementById('taskTime');
-            
-            const text = input.value.trim();
-            
-            if (text === '') {
-                alert('Vui lòng nhập công việc!');
-                return;
-            }
-
-            const newTask = {
-                id: Date.now(),
-                text: text,
-                completed: false,
-                date: dateInput.value,
-                time: timeInput.value,
-                notified: false
-            };
-
-            tasks.push(newTask);
-            saveTasks();
+            if(!currentUser) return;
+            const s = localStorage.getItem('tasks_' + currentUser);
+            tasks = s ? JSON.parse(s).map(t => ({...t, important: t.important || false})) : [];
             renderTasks();
-            
-            // Reset form
-            input.value = '';
-            dateInput.value = new Date().toISOString().split('T')[0];
-            timeInput.value = '';
-            input.focus();
+        }
+        function saveData() { if(currentUser) localStorage.setItem('tasks_' + currentUser, JSON.stringify(tasks)); }
+
+        // --- DATE INPUT ---
+        function setQuickDate(type) {
+            const d = new Date(); if(type === 'tomorrow') d.setDate(d.getDate() + 1);
+            const val = d.toISOString().split('T')[0];
+            document.getElementById('taskDate').value = val; updateDateUI(type, val);
+        }
+        function handleDateChange(input) {
+            if(!input.value) return updateDateUI(null, null);
+            const sel = new Date(input.value), today = new Date(), tmr = new Date(); tmr.setDate(tmr.getDate()+1);
+            if(sel.toDateString() === today.toDateString()) updateDateUI('today', input.value);
+            else if(sel.toDateString() === tmr.toDateString()) updateDateUI('tomorrow', input.value);
+            else updateDateUI('other', input.value);
+        }
+        function updateDateUI(type, val) {
+            document.getElementById('btnToday').classList.remove('active'); document.getElementById('btnTomorrow').classList.remove('active');
+            const lbl = document.getElementById('selectedDateLabel');
+            if(!val) { lbl.style.display = 'none'; return; }
+            if(type==='today') document.getElementById('btnToday').classList.add('active');
+            if(type==='tomorrow') document.getElementById('btnTomorrow').classList.add('active');
+            lbl.style.display='inline';
+            if(type==='today') lbl.innerText="Hôm nay"; else if(type==='tomorrow') lbl.innerText="Ngày mai";
+            else { const p = val.split('-'); lbl.innerText = `${p[2]}/${p[1]}`; }
         }
 
-        function deleteTask(id) {
-            tasks = tasks.filter(task => task.id !== id);
-            saveTasks();
-            renderTasks();
-            
-            // Nếu đang báo thức task này, tắt báo thức
-            if (currentAlarmTaskId === id) {
-                stopAlarm();
-            }
-        }
-
-        function toggleTask(id) {
-            tasks = tasks.map(task => {
-                if (task.id === id) {
-                    task.completed = !task.completed;
-                }
-                return task;
-            });
-            saveTasks();
-            renderTasks();
-            
-            // Nếu hoàn thành task đang báo thức, tắt báo thức
-            if (currentAlarmTaskId === id) {
-                stopAlarm();
-            }
-        }
-
-        function formatDateTime(date, time) {
-            if (!date && !time) return '';
-            
-            let result = '';
-            if (date) {
-                const d = new Date(date);
-                const today = new Date();
-                const tomorrow = new Date(today);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                
-                if (d.toDateString() === today.toDateString()) {
-                    result = 'Hôm nay';
-                } else if (d.toDateString() === tomorrow.toDateString()) {
-                    result = 'Ngày mai';
-                } else {
-                    result = d.toLocaleDateString('vi-VN');
-                }
-            }
-            
-            if (time) {
-                result += (result ? ', ' : '') + time;
-            }
-            
-            return result;
-        }
-
-        function checkReminders() {
-            const now = new Date();
-            
-            tasks.forEach(task => {
-                if (task.completed || task.notified || !task.date || !task.time) {
-                    return;
-                }
-                
-                const taskDateTime = new Date(task.date + ' ' + task.time);
-                const timeDiff = taskDateTime - now;
-                
-                // Nếu đến giờ (trong khoảng 60 giây)
-                if (timeDiff > 0 && timeDiff <= 60000) {
-                    showNotification(task);
-                    playAlarmSound();
-                    
-                    // Hiển thị banner báo thức
-                    document.getElementById('alarmTaskText').textContent = task.text;
-                    document.getElementById('alarmBanner').style.display = 'flex';
-                    currentAlarmTaskId = task.id;
-                    
-                    task.notified = true;
-                    saveTasks();
-                }
-            });
-        }
-
-        function showNotification(task) {
-            if (Notification.permission === "granted") {
-                const notification = new Notification("⏰ Nhắc nhở công việc!", {
-                    body: task.text,
-                    requireInteraction: true,
-                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%231a73e8"/><text x="50" y="70" font-size="50" text-anchor="middle" fill="white">⏰</text></svg>'
-                });
-                
-                notification.onclick = () => {
-                    window.focus();
-                    notification.close();
-                };
-            }
-        }
-
-        function renderTasks() {
-            const taskList = document.getElementById('taskList');
-            const emptyState = document.getElementById('emptyState');
-
-            if (tasks.length === 0) {
-                taskList.innerHTML = '';
-                emptyState.style.display = 'block';
+        // --- CRUD ---
+        function saveTask() {
+            const inp = document.getElementById('taskInput'), d = document.getElementById('taskDate'), tm = document.getElementById('taskTime');
+            const txt = inp.value.trim();
+            if(!txt) return alert("Bạn chưa nhập việc gì cả!");
+            if(editingId) {
+                tasks = tasks.map(t => t.id === editingId ? {...t, text:txt, date:d.value, time:tm.value} : t);
+                resetInput();
             } else {
-                emptyState.style.display = 'none';
-                
-                // Sắp xếp
-                const sortedTasks = [...tasks].sort((a, b) => {
-                    if (a.completed !== b.completed) {
-                        return a.completed ? 1 : -1;
-                    }
-                    if (a.date && b.date) {
-                        return new Date(a.date + ' ' + (a.time || '00:00')) - new Date(b.date + ' ' + (b.time || '00:00'));
-                    }
-                    if (a.date) return -1;
-                    if (b.date) return 1;
-                    return 0;
-                });
-                
-                taskList.innerHTML = sortedTasks.map(task => {
-                    const dateTimeStr = formatDateTime(task.date, task.time);
-                    const isUrgent = task.date && task.time && !task.completed && 
-                                    new Date(task.date + ' ' + task.time) <= new Date(Date.now() + 3600000);
-                    
-                    return `
-                        <li class="task-item">
-                            <div class="checkbox ${task.completed ? 'checked' : ''}" 
-                                 onclick="toggleTask(${task.id})">
-                            </div>
-                            <div class="task-content">
-                                <div class="task-text ${task.completed ? 'completed' : ''}">
-                                    ${task.text}
-                                </div>
-                                ${dateTimeStr ? `
-                                    <div class="task-time ${isUrgent ? 'urgent' : ''}">
-                                        🕐 ${dateTimeStr} ${isUrgent ? '⚠️' : ''}
-                                    </div>
-                                ` : ''}
-                            </div>
-                            <div class="delete-btn" onclick="deleteTask(${task.id})">
-                                ×
-                            </div>
-                        </li>
-                    `;
-                }).join('');
+                tasks.push({id:Date.now(), text:txt, completed:false, important:false, date:d.value, time:tm.value, notified:false});
             }
+            saveData(); renderTasks(); if(!editingId) inp.value = '';
+        }
+        function deleteTask(id) { if(confirm("Xóa nha?")) { tasks = tasks.filter(t=>t.id!==id); if(editingId===id) resetInput(); saveData(); renderTasks(); } }
+        function toggleComplete(id) {
+            tasks = tasks.map(t=>t.id===id?{...t, completed:!t.completed}:t);
+            if(tasks.find(t=>t.id===id && t.completed)) fireConfetti();
+            saveData(); renderTasks();
+        }
+        function toggleImportant(id) { tasks = tasks.map(t=>t.id===id?{...t, important:!t.important}:t); saveData(); renderTasks(); }
+        function startEdit(id) {
+            const t = tasks.find(x=>x.id===id); if(!t) return;
+            document.getElementById('taskInput').value = t.text;
+            const dInput = document.getElementById('taskDate'); dInput.value = t.date;
+            document.getElementById('taskTime').value = t.time;
+            handleDateChange(dInput); editingId = id;
+            document.getElementById('saveBtn').innerText = "Lưu"; document.getElementById('saveBtn').classList.add('update-mode');
+            document.getElementById('inputContainer').classList.add('editing');
+        }
+        function resetInput() {
+            editingId = null; document.getElementById('taskInput').value=''; document.getElementById('taskTime').value=''; document.getElementById('taskDate').value='';
+            updateDateUI(null, null); document.getElementById('saveBtn').innerText="Thêm";
+            document.getElementById('saveBtn').classList.remove('update-mode'); document.getElementById('inputContainer').classList.remove('editing');
         }
 
-        // ========== KHỞI ĐỘNG ==========
-        loadTasks();
-        checkNotificationPermission();
-        
-        // Kiểm tra nhắc nhở mỗi 10 giây
-        setInterval(checkReminders, 10000);
-        checkReminders();
+        // --- RENDER ---
+        function formatGoogleStyle(str) {
+            const d = new Date(str), now = new Date(), tmr = new Date(); tmr.setDate(now.getDate()+1);
+            if(d.toDateString()===now.toDateString()) return "Hôm nay";
+            if(d.toDateString()===tmr.toDateString()) return "Ngày mai";
+            return `${d.getDate()} thg ${d.getMonth()+1}`;
+        }
+        function setFilter(t) {
+            currentFilter = t; document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+            const map={'all':0,'important':1,'reminders':2,'completed':3};
+            if(document.querySelectorAll('.nav-item')[map[t]]) document.querySelectorAll('.nav-item')[map[t]].classList.add('active');
+            const titles={'all':'Tất cả công việc','important':'Quan trọng','reminders':'Nhắc nhở','completed':'Đã xong'};
+            document.getElementById('listTitle').innerText = titles[t]||'Danh sách'; renderTasks();
+        }
+        function renderTasks() {
+            const list = document.getElementById('taskList'), empty = document.getElementById('emptyState');
+            const total = tasks.length, done = tasks.filter(t=>t.completed).length;
+            const pct = total===0?0:Math.round((done/total)*100);
+            document.getElementById('progressBar').style.width = pct+'%'; document.getElementById('progressText').innerText = `${pct}% hoàn thành`;
 
-        // Set ngày hiện tại
-        document.getElementById('taskDate').valueAsDate = new Date();
+            let f = tasks;
+            if(currentFilter==='important') f=tasks.filter(t=>t.important && !t.completed);
+            else if(currentFilter==='reminders') f=tasks.filter(t=>(t.date||t.time) && !t.completed);
+            else if(currentFilter==='completed') f=tasks.filter(t=>t.completed);
+            else f=tasks.filter(t=>!t.completed);
+            f.sort((a,b)=>(b.important?1:-1)-(a.important?1:-1));
+
+            if(f.length===0) { list.innerHTML=''; empty.style.display='block'; return; }
+            empty.style.display='none';
+
+            list.innerHTML = f.map(t => {
+                let badge = '';
+                if(t.date) {
+                    const due = new Date(t.date+' '+(t.time||'23:59')), isOverdue = due < new Date() && !t.completed;
+                    const timeStr = t.time ? `, ${t.time}` : '';
+                    badge = `<div class="date-badge ${isOverdue?'overdue':''}">🗓 ${formatGoogleStyle(t.date)}${timeStr}</div>`;
+                }
+                return `
+                <li class="task-item ${t.important?'important':''}">
+                    <div class="checkbox ${t.completed?'checked':''}" onclick="toggleComplete(${t.id})"></div>
+                    <div class="task-content">
+                        <div class="task-text ${t.completed?'completed':''}">${t.text}</div>
+                        ${badge}
+                    </div>
+                    <div class="actions">
+                        <div class="icon-btn" onclick="startEdit(${t.id})">✏️</div>
+                        <div class="icon-btn star-btn ${t.important?'active':''}" onclick="toggleImportant(${t.id})">⭐️</div>
+                        <div class="icon-btn delete-btn" onclick="deleteTask(${t.id})">🗑</div>
+                    </div>
+                </li>`;
+            }).join('');
+        }
+
+        // --- THEME & ALARM ---
+        function toggleTheme() { const d = document.getElementById('themeToggle').checked; document.body.setAttribute('data-theme', d?'dark':'light'); localStorage.setItem('theme', d?'dark':'light'); }
+        function loadTheme() { const t = localStorage.getItem('theme')||'light'; document.body.setAttribute('data-theme', t); document.getElementById('themeToggle').checked = t==='dark'; }
+        function checkReminders() {
+            if(!currentUser) return;
+            const now = new Date();
+            tasks.forEach(t => {
+                if(t.completed||t.notified||!t.date||!t.time) return;
+                const d = new Date(t.date+' '+t.time);
+                if(d-now > 0 && d-now <= 60000) { playAlarmSound(); document.getElementById('alarmTaskText').innerText=t.text; document.getElementById('alarmBanner').style.display='flex'; currentAlarmTaskId=t.id; t.notified=true; saveData(); }
+            });
+            renderTasks();
+        }
+        function playAlarmSound() {
+            if(!audioContext) audioContext = new (window.AudioContext||window.webkitAudioContext)();
+            const o = audioContext.createOscillator(); o.frequency.value = 800;
+            const g = audioContext.createGain(); g.gain.value = 0.5;
+            o.connect(g); g.connect(audioContext.destination);
+            o.start(); o.stop(audioContext.currentTime+0.2);
+            if(!alarmInterval) alarmInterval = setInterval(playAlarmSound, 1000);
+        }
+        function stopAlarm() {
+            if(alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
+            document.getElementById('alarmBanner').style.display = 'none';
+            if(currentAlarmTaskId) { tasks = tasks.map(t=>t.id===currentAlarmTaskId?{...t, completed:true}:t); saveData(); renderTasks(); currentAlarmTaskId=null; }
+        }
     </script>
 </body>
 </html>
